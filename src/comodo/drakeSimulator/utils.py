@@ -9,20 +9,21 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import meshio
+import numpy as np
 
 sys.path.append("/home/laniakea/git/odio_urdf/")
 # download and install odio_urdf from akhilsathuluri/odio_urdf
 from odio_urdf import *
+from pydrake.geometry import (
+    AddCompliantHydroelasticProperties,
+    AddContactMaterial,
+    AddRigidHydroelasticProperties,
+)
+from pydrake.geometry import Box as BoxDrake
+from pydrake.geometry import HalfSpace, ProximityProperties
+from pydrake.math import RigidTransform
+from pydrake.multibody.plant import CoulombFriction
 from tqdm import tqdm
-
-
-def blockPrint():
-    sys.stdout = open(os.devnull, "w")
-
-
-# Restore
-def enablePrint():
-    sys.stdout = sys.__stdout__
 
 
 class DrakeURDFHelper:
@@ -106,9 +107,9 @@ class DrakeURDFHelper:
         """Converts the loaded xml to odio urdf format"""
         # convert the xml to odio urdf format
         self.odio_robot_dsl = xml_to_odio(self.root)
-        blockPrint()
+        # blockPrint()
         self.odio_robot = eval(self.odio_robot_dsl)
-        enablePrint()
+        # enablePrint()
 
     def add_acutation_tags(self):
         """Adds the actuation tags to the odio urdf"""
@@ -142,3 +143,70 @@ class DrakeURDFHelper:
             print(self.odio_robot, file=f)
 
         logging.info("Saved the urdf to {}".format(filename))
+
+    def get_urdf_string(self):
+        """Returns the urdf string"""
+        return str(self.odio_robot)
+
+    def get_sim_joint_order(self, plant, robot_model_sim):
+        sim_joint_order = []
+        for ii in plant.GetJointIndices(robot_model_sim):
+            jj = plant.get_joint(ii)
+            if jj.type_name() == "revolute":
+                sim_joint_order.append(jj.name())
+        return sim_joint_order
+
+    # add ground with friction
+    def add_ground_with_friction(self, plant):
+        surface_friction_ground = CoulombFriction(
+            static_friction=1.0, dynamic_friction=1.0
+        )
+        proximity_properties_ground = ProximityProperties()
+        AddContactMaterial(
+            1e4, 1e7, surface_friction_ground, proximity_properties_ground
+        )
+        AddRigidHydroelasticProperties(0.01, proximity_properties_ground)
+
+        plant.RegisterCollisionGeometry(
+            plant.world_body(),
+            RigidTransform(),
+            HalfSpace(),
+            "ground_collision",
+            proximity_properties_ground,
+        )
+        plant.RegisterVisualGeometry(
+            plant.world_body(),
+            RigidTransform(),
+            HalfSpace(),
+            "ground_visual",
+            np.array([0.5, 0.5, 0.5, 0.0]),
+        )
+
+    def add_soft_feet_collisions(self, plant, xMinMax, yMinMax):
+        surface_friction_feet = CoulombFriction(
+            static_friction=1.0, dynamic_friction=1.0
+        )
+        proximity_properties_feet = ProximityProperties()
+        AddContactMaterial(1e4, 1e7, surface_friction_feet, proximity_properties_feet)
+        AddCompliantHydroelasticProperties(0.01, 1e8, proximity_properties_feet)
+        for ii in ["l_foot_front", "l_foot_rear", "r_foot_front", "r_foot_rear"]:
+            # for ii in ["r_foot", "l_foot"]:
+            # for collision
+            plant.RegisterCollisionGeometry(
+                plant.GetBodyByName(ii),
+                RigidTransform(np.array([0, 0, 0])),
+                # RigidTransform(),
+                BoxDrake((xMinMax[1] - xMinMax[0]) / 2, yMinMax[1] - yMinMax[0], 2e-3),
+                ii + "_collision",
+                proximity_properties_feet,
+            )
+
+            # for visual
+            plant.RegisterVisualGeometry(
+                plant.GetBodyByName(ii),
+                RigidTransform(np.array([0, 0, 0])),
+                # RigidTransform(),
+                BoxDrake((xMinMax[1] - xMinMax[0]) / 2, yMinMax[1] - yMinMax[0], 2e-3),
+                ii + "_collision",
+                np.array([1.0, 1.0, 1.0, 1]),
+            )
