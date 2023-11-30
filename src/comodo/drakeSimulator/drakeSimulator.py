@@ -47,7 +47,7 @@ class DrakeSimulator(SimulatorAbstract):
         self.urdf_string = self.duh.get_urdf_string()
 
         builder = DiagramBuilder()
-        self.time_step = 2e-3
+        self.time_step = 1e-3
         plant, scene_graph = AddMultibodyPlantSceneGraph(
             builder, time_step=self.time_step
         )
@@ -78,7 +78,7 @@ class DrakeSimulator(SimulatorAbstract):
         self.nq = plant.num_positions()
         self.nv = plant.num_velocities()
         self.na = plant.num_actuators()
-        sim_joint_order = self.duh.get_sim_joint_order(plant, robot_model_sim)
+        self.sim_joint_order = self.duh.get_sim_joint_order(plant, robot_model_sim)
         # check if the joint ordering is the same
         # logging.info(
         #     "Need joint mapping: ", not (sim_joint_order == robot_model.joint_name_list)

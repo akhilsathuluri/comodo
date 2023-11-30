@@ -1,16 +1,17 @@
+from datetime import timedelta
+
+import bipedal_locomotion_framework as blf
+import idyntree.bindings as iDynTree
+import matplotlib.pyplot as plt
+import numpy as np
+
 from comodo.abstractClasses.planner import Planner
 from comodo.centroidalMPC.footPositionPlanner import FootPositionPlanner
-import bipedal_locomotion_framework as blf
-from datetime import timedelta
-import idyntree.bindings as iDynTree
-import numpy as np
-import matplotlib.pyplot as plt
 from comodo.centroidalMPC.mpcParameterTuning import MPCParameterTuning
 
 
 class CentroidalMPC(Planner):
     def __init__(self, robot_model, step_length, frequency_ms=100):
-
         self.dT = timedelta(milliseconds=frequency_ms)
         self.dT_in_seconds = frequency_ms / 1000
         self.contact_planner = FootPositionPlanner(
@@ -23,6 +24,7 @@ class CentroidalMPC(Planner):
         self.gravity = iDynTree.Vector3()
         self.gravity.zero()
         self.gravity.setVal(2, -blf.math.StandardAccelerationOfGravitation)
+        self.total_mass = robot_model.get_total_mass()
         self.contact_planner.set_scaling_parameters(
             scaling=scaling, scalingPos=scalingPos, scalingPosY=scalingPosY
         )
@@ -33,15 +35,17 @@ class CentroidalMPC(Planner):
         return self.dT_in_seconds
 
     def plan_trajectory(self):
-
         com = self.kindyn.getCenterOfMassPosition()
         dcom = self.kindyn.getCenterOfMassVelocity()
-        Jcm = iDynTree.MatrixDynSize(6, 6 + self.robot_model.NDoF)
-        self.kindyn.getCentroidalTotalMomentumJacobian(Jcm)
-        nu = np.concatenate((self.w_b, self.s_dot))
-        H = Jcm.toNumPy() @ nu
+        # Jcm = iDynTree.MatrixDynSize(6, 6 + self.robot_model.NDoF)
+        # self.kindyn.getCentroidalTotalMomentumJacobian(Jcm)
+        # nu = np.concatenate((self.w_b, self.s_dot))
+        # H = Jcm.toNumPy() @ nu
         dcom = self.centroidal_integrator.get_solution()[1]
         angular_mom = self.centroidal_integrator.get_solution()[2]
+        # angular_mom *= self.total_mass
+        # total_mom = self.kindyn.getCentroidalTotalMomentum().toNumPy()
+        # angular_mom = total_mom[3:] / self.total_mass
         self.centroidal_mpc.set_state(com.toNumPy(), dcom, angular_mom)
 
         self.centroidal_mpc.set_reference_trajectory(
@@ -252,11 +256,14 @@ class CentroidalMPC(Planner):
 
         com = self.kindyn.getCenterOfMassPosition()
         dcom = self.kindyn.getCenterOfMassVelocity()
-        Jcm = iDynTree.MatrixDynSize(6, 6 + self.robot_model.NDoF)
-        self.kindyn.getCentroidalTotalMomentumJacobian(Jcm)
-        nu = np.concatenate((self.w_b, self.s_dot))
-        H = Jcm.toNumPy() @ nu
-        self.centroidal_dynamics.set_state((com.toNumPy(), dcom.toNumPy(), H[3:]))
+        # Jcm = iDynTree.MatrixDynSize(6, 6 + self.robot_model.NDoF)
+        # self.kindyn.getCentroidalTotalMomentumJacobian(Jcm)
+        # nu = np.concatenate((self.w_b, self.s_dot))
+        # H = Jcm.toNumPy() @ nu
+        total_mom = self.kindyn.getCentroidalTotalMomentum().toNumPy()
+        angular_mom = total_mom[3:] / self.total_mass
+        # self.centroidal_dynamics.set_state((com.toNumPy(), dcom.toNumPy(), H[3:]))
+        self.centroidal_dynamics.set_state((com.toNumPy(), dcom.toNumPy(), angular_mom))
         self.centroidal_integrator.set_integration_step(self.dT)
 
     def get_references(self):
@@ -269,6 +276,16 @@ class CentroidalMPC(Planner):
         forces_right = np.zeros(3)
         for item in output_mpc.contacts[right_foot_tag].corners:
             forces_right = forces_right + item.force
+
         com = self.centroidal_integrator.get_solution()[0]
         dcom = self.centroidal_integrator.get_solution()[1]
-        return com, dcom, forces_left, forces_right
+        ang_mom = self.centroidal_integrator.get_solution()[2]
+
+        # -------------------------------------------------------------
+        # scale with mass since the centroidal system assumes unit mass
+        forces_left *= self.total_mass
+        forces_right *= self.total_mass
+        ang_mom *= self.total_mass
+        # -------------------------------------------------------------
+
+        return com, dcom, forces_left, forces_right, ang_mom
