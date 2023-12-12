@@ -9,7 +9,7 @@ from comodo.TSIDController.TSIDParameterTuning import TSIDParameterTuning
 
 class TSIDController(Controller):
     def __init__(self, frequency, robot_model) -> None:
-        blf.text_logging.set_verbosity(blf.text_logging.Verbosity.Debug)
+        blf.text_logging.set_verbosity(blf.text_logging.Verbosity.Off)
         self.controller = blf.tsid.QPTSID()
         self.gravity = iDynTree.Vector3()
         self.gravity.zero()
@@ -97,9 +97,9 @@ class TSIDController(Controller):
         self.CoM_Task.set_kin_dyn(self.kindyn)
         self.CoM_Task.initialize(param_handler=self.CoM_param_handler)
 
-        postural_Kp = tsid_parameters.postural_Kp
+        # postural_Kp = tsid_parameters.postural_Kp
         # postural_Kp = np.ones(self.robot_model.NDoF)
-        Kd_postural = 0 * np.power(postural_Kp, 1 / 2)
+        # Kd_postural = 0 * np.power(postural_Kp, 1 / 2)
         ## Joint regularziation task --> Task aiming at tracking desired joint trajectory COST
         self.joint_regularization_task = blf.tsid.JointTrackingTask()
         self.joint_regularization_param_handler = (
@@ -110,10 +110,10 @@ class TSIDController(Controller):
             value=self.robot_acceleration_variable_name,
         )
         self.joint_regularization_param_handler.set_parameter_vector_float(
-            name="kp", value=postural_Kp
+            name="kp", value=tsid_parameters.postural_Kp
         )
         self.joint_regularization_param_handler.set_parameter_vector_float(
-            name="kd", value=Kd_postural
+            name="kd", value=tsid_parameters.postural_Kd
         )
         self.joint_regularization_task_name = "joint_regularization_task"
         self.joint_regularization_task_priority = 1
