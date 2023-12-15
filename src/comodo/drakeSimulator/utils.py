@@ -10,9 +10,6 @@ from pathlib import Path
 
 import meshio
 import numpy as np
-
-sys.path.append("/home/laniakea/git/odio_urdf/")
-# download and install odio_urdf from akhilsathuluri/odio_urdf
 from odio_urdf import *
 from pydrake.geometry import (
     AddCompliantHydroelasticProperties,

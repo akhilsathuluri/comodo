@@ -2,14 +2,23 @@ import logging
 import math
 
 import numpy as np
+from odio_urdf import xml_to_odio
 from pydrake.common.eigen_geometry import Quaternion
 from pydrake.geometry import MeshcatVisualizer, StartMeshcat
 from pydrake.math import RigidTransform
 from pydrake.multibody.meshcat import ContactVisualizer, ContactVisualizerParams
 from pydrake.multibody.parsing import Parser
 from pydrake.multibody.plant import AddMultibodyPlantSceneGraph
-from pydrake.systems.analysis import Simulator
-from pydrake.systems.framework import DiagramBuilder
+from pydrake.systems.analysis import Simulator, SimulatorStatus
+from pydrake.systems.framework import (
+    Context,
+    DiagramBuilder,
+    InputPort,
+    InputPortIndex,
+    OutputPortIndex,
+    PortDataType,
+    System,
+)
 
 from comodo.abstractClasses.simulator import Simulator as SimulatorAbstract
 from comodo.drakeSimulator.utils import DrakeURDFHelper
@@ -121,6 +130,7 @@ class DrakeSimulator(SimulatorAbstract):
             self.diagram.ForcedPublish(self.context)
 
     def reset(self):
+        logging.error("Drake simulator reset not implemented, recreate drake_instance")
         pass
 
     def set_visualize_robot_flag(self, visualize_robot):
@@ -229,4 +239,5 @@ class DrakeSimulator(SimulatorAbstract):
             "Drake uses meshcat for visualization. Close browser tab to close \
             the visualisation."
         )
+        self.reset()
         pass
