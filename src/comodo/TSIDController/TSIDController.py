@@ -9,7 +9,7 @@ from comodo.TSIDController.TSIDParameterTuning import TSIDParameterTuning
 
 class TSIDController(Controller):
     def __init__(self, frequency, robot_model) -> None:
-        blf.text_logging.set_verbosity(blf.text_logging.Verbosity.Debug)
+        blf.text_logging.set_verbosity(blf.text_logging.Verbosity.Off)
         self.controller = blf.tsid.QPTSID()
         self.gravity = iDynTree.Vector3()
         self.gravity.zero()
@@ -97,9 +97,9 @@ class TSIDController(Controller):
         self.CoM_Task.set_kin_dyn(self.kindyn)
         self.CoM_Task.initialize(param_handler=self.CoM_param_handler)
 
-        postural_Kp = tsid_parameters.postural_Kp
+        # postural_Kp = tsid_parameters.postural_Kp
         # postural_Kp = np.ones(self.robot_model.NDoF)
-        Kd_postural = 0 * np.power(postural_Kp, 1 / 2)
+        # Kd_postural = 0 * np.power(postural_Kp, 1 / 2)
         ## Joint regularziation task --> Task aiming at tracking desired joint trajectory COST
         self.joint_regularization_task = blf.tsid.JointTrackingTask()
         self.joint_regularization_param_handler = (
@@ -110,10 +110,10 @@ class TSIDController(Controller):
             value=self.robot_acceleration_variable_name,
         )
         self.joint_regularization_param_handler.set_parameter_vector_float(
-            name="kp", value=postural_Kp
+            name="kp", value=tsid_parameters.postural_Kp
         )
         self.joint_regularization_param_handler.set_parameter_vector_float(
-            name="kd", value=Kd_postural
+            name="kd", value=tsid_parameters.postural_Kd
         )
         self.joint_regularization_task_name = "joint_regularization_task"
         self.joint_regularization_task_priority = 1
@@ -314,61 +314,61 @@ class TSIDController(Controller):
         ## ADDITIONAL TASKS
         # ---------------------------------------------------------------------------------------------
         # feet regularization terms
-        # self.left_foot_regularization_task = blf.tsid.VariableRegularizationTask()
-        # self.left_foot_regularization_task_name = "left_foot_regularization_task"
-        # self.left_foot_regularization_task_priority = 1
-        # self.left_foot_regularization_task_weight = 1e-1 * np.ones(6)
-        # self.left_foot_regularization_task_param_handler = (
-        #     blf.parameters_handler.StdParametersHandler()
-        # )
-        # self.left_foot_regularization_task_param_handler.set_parameter_string(
-        #     name="variable_name", value=self.variable_name_left_contact
-        # )
-        # self.left_foot_regularization_task_param_handler.set_parameter_int(
-        #     name="variable_size", value=6
-        # )
-        # self.left_foot_regularization_task.initialize(
-        #     param_handler=self.left_foot_regularization_task_param_handler
-        # )
+        self.left_foot_regularization_task = blf.tsid.VariableRegularizationTask()
+        self.left_foot_regularization_task_name = "left_foot_regularization_task"
+        self.left_foot_regularization_task_priority = 1
+        self.left_foot_regularization_task_weight = 1e-1 * np.ones(6)
+        self.left_foot_regularization_task_param_handler = (
+            blf.parameters_handler.StdParametersHandler()
+        )
+        self.left_foot_regularization_task_param_handler.set_parameter_string(
+            name="variable_name", value=self.variable_name_left_contact
+        )
+        self.left_foot_regularization_task_param_handler.set_parameter_int(
+            name="variable_size", value=6
+        )
+        self.left_foot_regularization_task.initialize(
+            param_handler=self.left_foot_regularization_task_param_handler
+        )
 
-        # self.right_foot_regularization_task = blf.tsid.VariableRegularizationTask()
-        # self.right_foot_regularization_task_name = "right_foot_regularization_task"
-        # self.right_foot_regularization_task_priority = 1
-        # self.right_foot_regularization_task_weight = 1e-1 * np.ones(6)
-        # self.right_foot_regularization_task_param_handler = (
-        #     blf.parameters_handler.StdParametersHandler()
-        # )
-        # self.right_foot_regularization_task_param_handler.set_parameter_string(
-        #     name="variable_name", value=self.variable_name_right_contact
-        # )
-        # self.right_foot_regularization_task_param_handler.set_parameter_int(
-        #     name="variable_size", value=6
-        # )
-        # self.right_foot_regularization_task.initialize(
-        #     param_handler=self.right_foot_regularization_task_param_handler
-        # )
+        self.right_foot_regularization_task = blf.tsid.VariableRegularizationTask()
+        self.right_foot_regularization_task_name = "right_foot_regularization_task"
+        self.right_foot_regularization_task_priority = 1
+        self.right_foot_regularization_task_weight = 1e-1 * np.ones(6)
+        self.right_foot_regularization_task_param_handler = (
+            blf.parameters_handler.StdParametersHandler()
+        )
+        self.right_foot_regularization_task_param_handler.set_parameter_string(
+            name="variable_name", value=self.variable_name_right_contact
+        )
+        self.right_foot_regularization_task_param_handler.set_parameter_int(
+            name="variable_size", value=6
+        )
+        self.right_foot_regularization_task.initialize(
+            param_handler=self.right_foot_regularization_task_param_handler
+        )
 
-        # ## Angular momentum task
-        # self.angular_momentum_task = blf.tsid.AngularMomentumTask()
-        # self.angular_momentum_task_name = "angular_momentum_task"
-        # self.angular_momentum_task_priority = 1
-        # self.angular_momentum_task_weight = 1e5 * np.ones(3)
-        # self.angular_momentum_task_parameter_handler = (
-        #     blf.parameters_handler.StdParametersHandler()
-        # )
-        # self.angular_momentum_task_parameter_handler.set_group(
-        #     "CONTACT_0", contact_group_left
-        # )
-        # self.angular_momentum_task_parameter_handler.set_group(
-        #     "CONTACT_1", contact_group_right
-        # )
-        # self.angular_momentum_task_parameter_handler.set_parameter_float(
-        #     name="kp", value=10.0
-        # )
-        # self.angular_momentum_task.set_kin_dyn(self.kindyn)
-        # self.angular_momentum_task.initialize(
-        #     self.angular_momentum_task_parameter_handler
-        # )
+        ## Angular momentum task
+        self.angular_momentum_task = blf.tsid.AngularMomentumTask()
+        self.angular_momentum_task_name = "angular_momentum_task"
+        self.angular_momentum_task_priority = 1
+        self.angular_momentum_task_weight = 1e5 * np.ones(3)
+        self.angular_momentum_task_parameter_handler = (
+            blf.parameters_handler.StdParametersHandler()
+        )
+        self.angular_momentum_task_parameter_handler.set_group(
+            "CONTACT_0", contact_group_left
+        )
+        self.angular_momentum_task_parameter_handler.set_group(
+            "CONTACT_1", contact_group_right
+        )
+        self.angular_momentum_task_parameter_handler.set_parameter_float(
+            name="kp", value=10.0
+        )
+        self.angular_momentum_task.set_kin_dyn(self.kindyn)
+        self.angular_momentum_task.initialize(
+            self.angular_momentum_task_parameter_handler
+        )
         # ---------------------------------------------------------------------------------------------
 
         ## Add tasks to the controller
@@ -420,24 +420,24 @@ class TSIDController(Controller):
         # ---------------------------------------------------------------------------------------------
         ## ADDITIONAL TASKS
         # ---------------------------------------------------------------------------------------------
-        # self.controller.add_task(
-        #     self.left_foot_regularization_task,
-        #     self.left_foot_regularization_task_name,
-        #     self.left_foot_regularization_task_priority,
-        #     self.left_foot_regularization_task_weight,
-        # )
-        # self.controller.add_task(
-        #     self.right_foot_regularization_task,
-        #     self.right_foot_regularization_task_name,
-        #     self.right_foot_regularization_task_priority,
-        #     self.right_foot_regularization_task_weight,
-        # )
-        # self.controller.add_task(
-        #     self.angular_momentum_task,
-        #     self.angular_momentum_task_name,
-        #     self.angular_momentum_task_priority,
-        #     self.angular_momentum_task_weight,
-        # )
+        self.controller.add_task(
+            self.left_foot_regularization_task,
+            self.left_foot_regularization_task_name,
+            self.left_foot_regularization_task_priority,
+            self.left_foot_regularization_task_weight,
+        )
+        self.controller.add_task(
+            self.right_foot_regularization_task,
+            self.right_foot_regularization_task_name,
+            self.right_foot_regularization_task_priority,
+            self.right_foot_regularization_task_weight,
+        )
+        self.controller.add_task(
+            self.angular_momentum_task,
+            self.angular_momentum_task_name,
+            self.angular_momentum_task_priority,
+            self.angular_momentum_task_weight,
+        )
         # ---------------------------------------------------------------------------------------------
         self.controller.finalize(self.var_handler)
 
@@ -518,7 +518,7 @@ class TSIDController(Controller):
         s_desired,
         wrenches_left,
         wrenches_right,
-        # ang_mom_desired,
+        ang_mom_desired,
     ):
         self.CoM_Task.set_set_point(com, dcom, ddcom)
         self.left_foot_tracking_task.set_set_point(
@@ -536,16 +536,13 @@ class TSIDController(Controller):
             right_contact=right_foot_desired.is_in_contact,
         )
         self.joint_regularization_task.set_set_point(s_desired)
-        # self.angular_momentum_task.set_set_point(ang_mom_desired, np.zeros(3))
+        self.angular_momentum_task.set_set_point(ang_mom_desired, np.zeros(3))
         wrench_desired_left = np.zeros(6)
         wrench_desired_right = np.zeros(6)
-        # mass = self.robot_model.get_total_mass()
-        # wrench_desired[2] = -(mass*9.81/2)
-        # wrench_desiredp[]
         wrench_desired_left[:3] = wrenches_left
         wrench_desired_right[:3] = wrenches_right
-        # self.left_foot_regularization_task.set_set_point(wrench_desired_left)
-        # self.right_foot_regularization_task.set_set_point(wrench_desired_right)
+        self.left_foot_regularization_task.set_set_point(wrench_desired_left)
+        self.right_foot_regularization_task.set_set_point(wrench_desired_right)
 
     def update_com_task(self):
         angle = 0.2 * self.t

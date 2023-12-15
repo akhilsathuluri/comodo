@@ -1,15 +1,15 @@
-from adam.casadi.computations import KinDynComputations
-import numpy as np
-from urchin import URDF
-from urchin import Joint
-from urchin import Link
-import mujoco
+import copy
+import os
 import tempfile
 import xml.etree.ElementTree as ET
-import idyntree.bindings as iDynTree
+from contextlib import redirect_stderr
+
 import casadi as cs
-import copy
-import xml.etree.ElementTree as ET
+import idyntree.bindings as iDynTree
+import mujoco
+import numpy as np
+from adam.casadi.computations import KinDynComputations
+from urchin import URDF, Joint, Link
 
 
 class RobotModel(KinDynComputations):
@@ -46,7 +46,8 @@ class RobotModel(KinDynComputations):
         self.H_b = iDynTree.Transform()
         path_temp_xml = tempfile.NamedTemporaryFile(mode="w+")
         path_temp_xml.write(urdfstring)
-        super().__init__(path_temp_xml.name, self.joint_name_list, self.base_link)
+        with redirect_stderr(open(os.devnull, "w")):
+            super().__init__(path_temp_xml.name, self.joint_name_list, self.base_link)
 
     def override_control_boar_list(self, remote_control_board_list: list):
         self.remote_control_board_list = remote_control_board_list
@@ -80,7 +81,12 @@ class RobotModel(KinDynComputations):
         shoulder_roll = 0.251
         elbow = 0.616
 
-        p_opts = {}
+        # p_opts = {}
+        p_opts = {
+            "ipopt.print_level": 0,
+            "print_time": 0,
+            "ipopt.sb": "yes",
+        }
         s_opts = {"linear_solver": "mumps"}
         self.solver = cs.Opti()
         self.solver.solver("ipopt", p_opts, s_opts)
@@ -179,7 +185,7 @@ class RobotModel(KinDynComputations):
         z = (R[1, 0] - R[0, 1]) / S
 
         # Normalize the quaternion
-        length = cs.sqrt(w ** 2 + x ** 2 + y ** 2 + z ** 2)
+        length = cs.sqrt(w**2 + x**2 + y**2 + z**2)
         w /= length
         x /= length
         y /= length

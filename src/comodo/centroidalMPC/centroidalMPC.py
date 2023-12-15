@@ -35,18 +35,24 @@ class CentroidalMPC(Planner):
         return self.dT_in_seconds
 
     def plan_trajectory(self):
-        com = self.kindyn.getCenterOfMassPosition()
-        dcom = self.kindyn.getCenterOfMassVelocity()
+        com = self.kindyn.getCenterOfMassPosition().toNumPy()
+        # dcom = self.kindyn.getCenterOfMassVelocity()
         # Jcm = iDynTree.MatrixDynSize(6, 6 + self.robot_model.NDoF)
         # self.kindyn.getCentroidalTotalMomentumJacobian(Jcm)
         # nu = np.concatenate((self.w_b, self.s_dot))
         # H = Jcm.toNumPy() @ nu
-        dcom = self.centroidal_integrator.get_solution()[1]
-        angular_mom = self.centroidal_integrator.get_solution()[2]
-        # angular_mom *= self.total_mass
-        # total_mom = self.kindyn.getCentroidalTotalMomentum().toNumPy()
-        # angular_mom = total_mom[3:] / self.total_mass
-        self.centroidal_mpc.set_state(com.toNumPy(), dcom, angular_mom)
+        # dcom = self.centroidal_integrator.get_solution()[1]
+        # angular_mom = self.centroidal_integrator.get_solution()[2]
+
+        # ----------------
+        # ## closing centroidal dynamics with robot state
+        # -------------
+        dcom = self.kindyn.getCenterOfMassVelocity().toNumPy()
+        total_mom = self.kindyn.getCentroidalTotalMomentum().toNumPy()
+        angular_mom = total_mom[3:] / self.total_mass
+        # ----------------
+
+        self.centroidal_mpc.set_state(com, dcom, angular_mom)
 
         self.centroidal_mpc.set_reference_trajectory(
             self.com_traj, self.angular_mom_trak
@@ -254,16 +260,18 @@ class CentroidalMPC(Planner):
         self.centroidal_integrator.set_dynamical_system(self.centroidal_dynamics)
         self.set_state_with_base(s, s_dot, H_b, w_b, t)
 
-        com = self.kindyn.getCenterOfMassPosition()
-        dcom = self.kindyn.getCenterOfMassVelocity()
+        com = self.kindyn.getCenterOfMassPosition().toNumPy()
+        dcom = self.kindyn.getCenterOfMassVelocity().toNumPy()
         # Jcm = iDynTree.MatrixDynSize(6, 6 + self.robot_model.NDoF)
         # self.kindyn.getCentroidalTotalMomentumJacobian(Jcm)
         # nu = np.concatenate((self.w_b, self.s_dot))
         # H = Jcm.toNumPy() @ nu
+        # ----------------
         total_mom = self.kindyn.getCentroidalTotalMomentum().toNumPy()
         angular_mom = total_mom[3:] / self.total_mass
+        self.centroidal_dynamics.set_state((com, dcom, angular_mom))
+        # ----------------
         # self.centroidal_dynamics.set_state((com.toNumPy(), dcom.toNumPy(), H[3:]))
-        self.centroidal_dynamics.set_state((com.toNumPy(), dcom.toNumPy(), angular_mom))
         self.centroidal_integrator.set_integration_step(self.dT)
 
     def get_references(self):
