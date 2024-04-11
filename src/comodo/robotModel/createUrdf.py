@@ -10,9 +10,12 @@ import tempfile
 
 
 class createUrdf:
-    def __init__(self, original_urdf_path, save_gazebo_plugin=True) -> None:
+    def __init__(
+        self, original_urdf_path, save_gazebo_plugin=True, mesh_path=None
+    ) -> None:
         self.original_urdf_path = original_urdf_path
         self.save_gazebo_plugin = save_gazebo_plugin
+        self.mesh_path = mesh_path
         if save_gazebo_plugin:
             path_temp_dummy = tempfile.NamedTemporaryFile(mode="w+")
             self.dummy_file = path_temp_dummy.name
@@ -21,7 +24,23 @@ class createUrdf:
                 self.original_urdf_path, self.dummy_file
             )
         else:
-            self.robot = URDF.load(self.original_urdf_path)
+            #  we need to massage the path if package is used
+            if mesh_path is None:
+                self.robot = URDF.load(self.original_urdf_path)
+            else:
+                if mesh_path is None:
+                    self.robot = URDF.load(self.original_urdf_path)
+                else:
+                    with open(self.original_urdf_path, "r") as f:
+                        urdf_string = f.read()
+                        modified_urdf_string = urdf_string.replace(
+                            "package://", mesh_path
+                        )
+                        filename = "./tempfile.urdf"
+                        with open(filename, "w") as f:
+                            f.write(modified_urdf_string)
+                        self.robot = URDF.load(filename)
+                    # self.robot = URDF.load_string(modified_urdf_string)
 
     def modify_lengths(self, length_multipliers: dict):
         for name, modification in length_multipliers.items():
@@ -65,4 +84,21 @@ class createUrdf:
                 self.original_urdf_path, self.dummy_file
             )
         else:
-            self.robot = URDF.load(self.original_urdf_path)
+            # self.robot = URDF.load(self.original_urdf_path)
+            #  we need to massage the path if package is used
+            if self.mesh_path is None:
+                self.robot = URDF.load(self.original_urdf_path)
+            else:
+                if self.mesh_path is None:
+                    self.robot = URDF.load(self.original_urdf_path)
+                else:
+                    with open(self.original_urdf_path, "r") as f:
+                        urdf_string = f.read()
+                        modified_urdf_string = urdf_string.replace(
+                            "package://", self.mesh_path
+                        )
+                        filename = "./tempfile.urdf"
+                        with open(filename, "w") as f:
+                            f.write(modified_urdf_string)
+                        self.robot = URDF.load(filename)
+                    # self.robot = URDF.load_string(modified_urdf_string)

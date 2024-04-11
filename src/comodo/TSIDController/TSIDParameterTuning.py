@@ -5,33 +5,52 @@ class TSIDParameterTuning:
     def __init__(self) -> None:
         self.CoM_Kp = 15.0
         self.CoM_Kd = 7.0
+        # self.postural_Kp = (
+        #     np.array(
+        #         [
+        #             130,
+        #             80,
+        #             20,
+        #             60,
+        #             130,
+        #             80,
+        #             20,
+        #             60,
+        #             150,
+        #             20,
+        #             20,
+        #             180,
+        #             140,
+        #             20,
+        #             150,
+        #             20,
+        #             20,
+        #             180,
+        #             140,
+        #             20,
+        #         ]
+        #     )
+        #     * 2.8
+        # )  # TODO symmetry
+
         self.postural_Kp = (
             np.array(
                 [
-                    130,
-                    80,
-                    20,
-                    60,
-                    130,
-                    80,
-                    20,
-                    60,
                     150,
                     20,
                     20,
                     180,
                     140,
-                    20,
                     150,
                     20,
                     20,
                     180,
                     140,
-                    20,
                 ]
             )
             * 2.8
         )  # TODO symmetry
+
         self.postural_weight = 10 * np.ones(len(self.postural_Kp))
         self.foot_tracking_task_kp_lin = 30.0
         self.foot_tracking_task_kd_lin = 7.0

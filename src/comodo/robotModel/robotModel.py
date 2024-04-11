@@ -17,19 +17,23 @@ class RobotModel(KinDynComputations):
         self,
         urdfstring: str,
         robot_name: str,
+        mesh_path: str,
         joint_name_list: list,
         base_link: str = "root_link",
         left_foot: str = "l_sole",
         right_foot: str = "r_sole",
         torso: str = "chest",
+        original_urdf_path: str = None,
     ) -> None:
         self.urdf_string = urdfstring
         self.robot_name = robot_name
         self.joint_name_list = joint_name_list
         self.base_link = base_link
+        self.mesh_path = mesh_path
         self.left_foot_frame = left_foot
         self.right_foot_frame = right_foot
         self.torso_link = torso
+        self.original_urdf_path = original_urdf_path
 
         self.remote_control_board_list = [
             "/" + self.robot_name + "/torso",
@@ -109,13 +113,13 @@ class RobotModel(KinDynComputations):
         # self.solver.subject_to(self.s[11]< -0.05)
         # self.solver.subject_to(cs.abs(self.s[17])>0.05 )
         # self.solver.subject_to(self.s[17]< -0.05)
-        self.solver.subject_to(self.s[17] == desired_knee)
-        self.solver.subject_to(self.s[11] == desired_knee)
-        self.solver.subject_to(self.s[3] == elbow)
-        self.solver.subject_to(self.s[7] == elbow)
-        self.solver.subject_to(self.s[1] == shoulder_roll)
-        self.solver.subject_to(self.s[5] == shoulder_roll)
-        self.solver.subject_to(self.s[9] == self.s[15])
+        # self.solver.subject_to(self.s[17] == desired_knee)
+        # self.solver.subject_to(self.s[11] == desired_knee)
+        # self.solver.subject_to(self.s[3] == elbow)
+        # self.solver.subject_to(self.s[7] == elbow)
+        # self.solver.subject_to(self.s[1] == shoulder_roll)
+        # self.solver.subject_to(self.s[5] == shoulder_roll)
+        # self.solver.subject_to(self.s[9] == self.s[15])
         # self.solver.subject_to(cs.norm_2(self.quat_pose_b[:4]) == 1.0)
         self.solver.subject_to(H_left_foot[2, 3] == 0.0)
         self.solver.subject_to(H_right_foot[2, 3] == 0.0)
@@ -179,7 +183,7 @@ class RobotModel(KinDynComputations):
         z = (R[1, 0] - R[0, 1]) / S
 
         # Normalize the quaternion
-        length = cs.sqrt(w ** 2 + x ** 2 + y ** 2 + z ** 2)
+        length = cs.sqrt(w**2 + x**2 + y**2 + z**2)
         w /= length
         x /= length
         y /= length

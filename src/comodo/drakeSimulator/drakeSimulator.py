@@ -37,6 +37,8 @@ class DrakeSimulator(SimulatorAbstract):
         # load the robot model construct the diagram and store the simulator
         self.robot_model = robot_model
         self.urdf_string = robot_model.urdf_string
+        self.mesh_path = robot_model.mesh_path
+        self.original_urdf_path = robot_model.original_urdf_path
 
         # convert the urdf string to be drake compatible
         self.duh.load_urdf(urdf_string=self.urdf_string)
@@ -54,23 +56,32 @@ class DrakeSimulator(SimulatorAbstract):
         parser = Parser(plant, scene_graph)
         # TODO: Handle urdfs with mesh packages
         # parser.package_map().Add("ergoCub", mesh_path)
+        # parser.package_map().Add("package://", self.mesh_path)
         robot_model_sim = parser.AddModels(
+            # self.original_urdf_path,
             file_contents=self.urdf_string,
             file_type="urdf",
         )[0]
 
         # TODO: Use Im and Km to add motor params here
-        logging.warning("NotImplementedWarning: Motor parameters are currently ignored.")
+        logging.warning(
+            "NotImplementedWarning: Motor parameters are currently ignored."
+        )
         # ignoring those arguments for now
 
         # add the ground and the feet
         self.duh.add_ground_with_friction(plant)
 
         # configure feet collisions
-        xMinMax = [-0.225, 0.225]
-        yMinMax = [-0.05, 0.05]
+        # xMinMax = [-0.225, 0.225]
+        # yMinMax = [-0.05, 0.05]
+
+        xMinMax = [-0.05, 0.05]
+        yMinMax = [-0.08, 0.08]
         foot_frames = [robot_model.left_foot_frame, robot_model.right_foot_frame]
-        self.duh.add_soft_feet_collisions(plant, xMinMax=xMinMax, yMinMax=yMinMax, foot_frames = foot_frames)
+        self.duh.add_soft_feet_collisions(
+            plant, xMinMax=xMinMax, yMinMax=yMinMax, foot_frames=foot_frames
+        )
 
         plant.Finalize()
         builder.ExportInput(plant.get_actuation_input_port(), "control_input")
@@ -139,7 +150,9 @@ class DrakeSimulator(SimulatorAbstract):
         # pass meshcat to visualise the robot
         self.visualize_robot_flag = visualize_robot
         if self.visualize_robot_flag and not self.active_meshcat:
-            logging.info("Visualisation for drake via meshcat can be accessd via the url output from the execution.")
+            logging.info(
+                "Visualisation for drake via meshcat can be accessd via the url output from the execution."
+            )
             self.meshcat = StartMeshcat()
             self.active_meshcat = True
         pass
@@ -167,7 +180,9 @@ class DrakeSimulator(SimulatorAbstract):
         pass
 
     def step_with_motors(self, n_step, torque, visualize=True):
-        logging.warning("NotImplementedWarning: Stepping with motor parameters is not yet implemented.")
+        logging.warning(
+            "NotImplementedWarning: Stepping with motor parameters is not yet implemented."
+        )
         self.simulator.AdvanceTo(self.context.get_time() + n_step * self.time_step)
         if visualize and self.visualize_robot_flag:
             self.diagram.ForcedPublish(self.context)

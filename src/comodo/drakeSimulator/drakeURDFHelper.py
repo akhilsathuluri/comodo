@@ -170,13 +170,15 @@ class DrakeURDFHelper:
         proximity_properties_feet = ProximityProperties()
         AddContactMaterial(1e4, 1e7, surface_friction_feet, proximity_properties_feet)
         AddCompliantHydroelasticProperties(0.01, 1e8, proximity_properties_feet)
-
+        thickness = 5e-3
         for ii in foot_frames:
             # for collision
             plant.RegisterCollisionGeometry(
                 plant.GetBodyByName(ii),
                 RigidTransform(np.array([0, 0, 0])),
-                BoxDrake((xMinMax[1] - xMinMax[0]) / 2, yMinMax[1] - yMinMax[0], 2e-3),
+                BoxDrake(
+                    (xMinMax[1] - xMinMax[0]) / 2, yMinMax[1] - yMinMax[0], thickness
+                ),
                 ii + "_collision",
                 proximity_properties_feet,
             )
@@ -185,7 +187,9 @@ class DrakeURDFHelper:
             plant.RegisterVisualGeometry(
                 plant.GetBodyByName(ii),
                 RigidTransform(np.array([0, 0, 0])),
-                BoxDrake((xMinMax[1] - xMinMax[0]) / 2, yMinMax[1] - yMinMax[0], 2e-3),
+                BoxDrake(
+                    (xMinMax[1] - xMinMax[0]) / 2, yMinMax[1] - yMinMax[0], thickness
+                ),
                 ii + "_collision",
                 np.array([1.0, 1.0, 1.0, 1]),
             )
