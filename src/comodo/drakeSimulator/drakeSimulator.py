@@ -19,6 +19,7 @@ from pydrake.systems.framework import (
     PortDataType,
     System,
 )
+from pathlib import Path
 
 from comodo.abstractClasses.simulator import Simulator as SimulatorAbstract
 from comodo.drakeSimulator.drakeURDFHelper import DrakeURDFHelper
@@ -114,6 +115,97 @@ class DrakeSimulator(SimulatorAbstract):
 
         diagram = builder.Build()
         self.simulator = Simulator(diagram)
+        # logging.critical("Real time rate modified!!!")
+        # self.simulator.set_target_realtime_rate(0.10)
+
+        # now perform the setup
+        self._setup(s, xyz_rpy)
+
+    def load_model_from_file(
+        self,
+        urdf_file,
+        robot_model,
+        package_path,
+        package_name,
+        s,
+        xyz_rpy,
+        kv_motors=None,
+        Im=None,
+    ):
+        # load the robot model construct the diagram and store the simulator
+        # self.robot_model = robot_model
+        # self.urdf_string = robot_model.urdf_string
+        # self.mesh_path = robot_model.mesh_path
+        # self.original_urdf_path = robot_model.original_urdf_path
+
+        # convert the urdf string to be drake compatible
+        # self.duh.load_urdf(urdf_string=self.urdf_string)
+        # self.duh.remove_all_collisions()
+        # self.duh.fix_not_in_joint_list(self.robot_model.joint_name_list)
+        # self.duh.convert_xml_to_odio()
+        # self.duh.add_acutation_tags()
+        # self.urdf_string = self.duh.get_urdf_string()
+
+        builder = DiagramBuilder()
+        self.time_step = 1e-3
+        plant, scene_graph = AddMultibodyPlantSceneGraph(
+            builder, time_step=self.time_step
+        )
+        parser = Parser(plant, scene_graph)
+        abs_path = Path(package_path).resolve().__str__()
+        parser.package_map().Add(
+            package_name.split("/")[0], abs_path + "/" + package_name
+        )
+        robot_model_sim = parser.AddModels(urdf_file.name)[0]
+
+        # TODO: Use Im and Km to add motor params here
+        logging.warning(
+            "NotImplementedWarning: Motor parameters are currently ignored."
+        )
+        # ignoring those arguments for now
+
+        # add the ground and the feet
+        self.duh.add_ground_with_friction(plant)
+
+        xMinMax = [-0.10, 0.10]
+        yMinMax = [-0.05, 0.05]
+
+        foot_frames = [robot_model.left_foot_frame, robot_model.right_foot_frame]
+        self.duh.add_soft_feet_collisions(
+            plant, xMinMax=xMinMax, yMinMax=yMinMax, foot_frames=foot_frames
+        )
+
+        plant.Finalize()
+        builder.ExportInput(plant.get_actuation_input_port(), "control_input")
+        builder.ExportOutput(plant.get_state_output_port(), "state_output")
+
+        # useful simulator details
+        self.nq = plant.num_positions()
+        self.nv = plant.num_velocities()
+        self.na = plant.num_actuators()
+        # self.sim_joint_order = self.duh.get_sim_joint_order(plant, robot_model_sim)
+        # check if the joint ordering is the same
+        # logging.info(
+        #     "Need joint mapping: ", not (sim_joint_order == robot_model.joint_name_list)
+        # )
+
+        # create useful variables
+        self.qpos = np.zeros(self.nq)
+        self.joint_torques = np.zeros(self.na)
+
+        if self.visualize_robot_flag:
+            MeshcatVisualizer.AddToBuilder(builder, scene_graph, self.meshcat)
+            ContactVisualizer.AddToBuilder(
+                builder,
+                plant,
+                self.meshcat,
+                ContactVisualizerParams(
+                    newtons_per_meter=1e3, newton_meters_per_meter=1e1
+                ),
+            )
+
+        diagram = builder.Build()
+        self.simulator = Simulator(diagram)
 
         # now perform the setup
         self._setup(s, xyz_rpy)
@@ -177,6 +269,7 @@ class DrakeSimulator(SimulatorAbstract):
         self.simulator.AdvanceTo(self.context.get_time() + n_step * self.time_step)
         if visualize and self.visualize_robot_flag:
             self.diagram.ForcedPublish(self.context)
+            
         pass
 
     def step_with_motors(self, n_step, torque, visualize=True):

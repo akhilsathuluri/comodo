@@ -5,34 +5,8 @@ class TSIDParameterTuning:
     def __init__(self) -> None:
         self.CoM_Kp = 15.0
         self.CoM_Kd = 7.0
-        # self.postural_Kp = (
-        #     np.array(
-        #         [
-        #             130,
-        #             80,
-        #             20,
-        #             60,
-        #             130,
-        #             80,
-        #             20,
-        #             60,
-        #             150,
-        #             20,
-        #             20,
-        #             180,
-        #             140,
-        #             20,
-        #             150,
-        #             20,
-        #             20,
-        #             180,
-        #             140,
-        #             20,
-        #         ]
-        #     )
-        #     * 2.8
-        # )  # TODO symmetry
 
+        # since we only have one leg + symmetry
         self.postural_Kp = (
             np.array(
                 [
@@ -40,15 +14,10 @@ class TSIDParameterTuning:
                     20,
                     20,
                     180,
-                    140,
-                    150,
-                    20,
-                    20,
-                    180,
-                    140,
                 ]
+                * 2
             )
-            * 2.8
+            * 1.0
         )  # TODO symmetry
 
         self.postural_weight = 10 * np.ones(len(self.postural_Kp))
@@ -60,8 +29,8 @@ class TSIDParameterTuning:
         self.root_link_kp_ang = 20.0
         self.root_link_kd_ang = 10.0
 
-    def set_postural_gain(self, arm, leg):
-        self.postural_Kp = np.concatenate([arm, arm, leg, leg])
+    def set_postural_gain(self, leg):
+        self.postural_Kp = np.concatenate([leg, leg])
 
     def set_foot_task(self, kp_lin, kd_lin, kp_ang, kd_ang):
         self.foot_tracking_task_kp_lin = kp_lin
@@ -82,7 +51,7 @@ class TSIDParameterTuning:
         self.CoM_Kp = kp_com
 
     def set_from_x_k(self, x_k):
-        self.set_postural_gain(x_k[:4], x_k[4:10])
-        self.set_foot_task(x_k[10], x_k[11], x_k[12], x_k[13])
-        self.set_root_task(x_k[14], x_k[15])
-        self.set_com_task(x_k[16], x_k[17])
+        self.set_postural_gain(x_k[:4])
+        self.set_foot_task(x_k[4], x_k[5], x_k[6], x_k[7])
+        self.set_root_task(x_k[8], x_k[9])
+        self.set_com_task(x_k[10], x_k[11])

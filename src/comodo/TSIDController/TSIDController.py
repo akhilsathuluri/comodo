@@ -101,6 +101,7 @@ class TSIDController(Controller):
         postural_Kp = tsid_parameters.postural_Kp
         # postural_Kp = np.ones(self.robot_model.NDoF)
         Kd_postural = 0 * np.power(postural_Kp, 1 / 2)
+
         ## Joint regularziation task --> Task aiming at tracking desired joint trajectory COST
         self.joint_regularization_task = blf.tsid.JointTrackingTask()
         self.joint_regularization_param_handler = (
@@ -140,7 +141,7 @@ class TSIDController(Controller):
             name="static_friction_coefficient", value=1.0
         )
         self.left_foot_param_handler.set_parameter_vector_float(
-            name="foot_limits_x", value=[-0.12, 0.12]
+            name="foot_limits_x", value=[-0.1, 0.1]
         )
         self.left_foot_param_handler.set_parameter_vector_float(
             name="foot_limits_y", value=[-0.05, 0.05]
@@ -168,7 +169,7 @@ class TSIDController(Controller):
             name="static_friction_coefficient", value=1.0
         )
         self.right_foot_param_handler.set_parameter_vector_float(
-            name="foot_limits_x", value=[-0.12, 0.12]
+            name="foot_limits_x", value=[-0.1, 0.1]
         )
         self.right_foot_param_handler.set_parameter_vector_float(
             name="foot_limits_y", value=[-0.05, 0.05]
@@ -304,9 +305,9 @@ class TSIDController(Controller):
         self.root_link_task.initialize(param_handler=self.root_link_task_param_handler)
 
         ## Add tasks to the controller
-        self.controller.add_task(
-            self.CoM_Task, self.CoM_task_name, self.CoM_task_priority
-        )
+        # self.controller.add_task(
+        #     self.CoM_Task, self.CoM_task_name, self.CoM_task_priority
+        # )
         self.controller.add_task(
             self.joint_regularization_task,
             self.joint_regularization_task_name,

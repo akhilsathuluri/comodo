@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib.patches import Rectangle
 import bipedal_locomotion_framework.bindings as blf
 from datetime import timedelta
-
+from pydrake.math import RotationMatrix
 
 class FootPositionPlanner:
     def __init__(self, robot_model: RobotModel, dT, step_length):
@@ -35,8 +35,6 @@ class FootPositionPlanner:
         self.H_right_foot_init = self.H_right_foot_fun(Hb, s)
 
     def compute_feet_contact_position(self):
-        quaternion = [0.0, 0.0, 0.0, 1.0]
-        # quaternion[3] = 1
         ### Left Foot
         self.contact_list_left_foot = blf.contacts.ContactList()
         # self.contact_list_left_foot.setDefaultName("LeftFoot")
@@ -47,7 +45,10 @@ class FootPositionPlanner:
         leftPosition[1] = float(leftPosition_casadi[1])
         leftPosition[2] = float(leftPosition_casadi[2])
         leftPosition[2] = 0.0
-        # Note we are using the default name and type i.e. full contact
+        # also get the initial foot orientation
+        foot_quat_drake = RotationMatrix(self.H_left_foot_fun(H_b, s_des)[:3, :3]).ToQuaternion().wxyz()
+        quaternion = np.append(foot_quat_drake[1:], foot_quat_drake[0])
+
         contact.pose = manif.SE3(position=leftPosition, quaternion=quaternion)
         contact.activation_time = timedelta(seconds=0.0)
         contact.deactivation_time = timedelta(seconds=1.0 * self.scaling)
@@ -295,9 +296,9 @@ class FootPositionPlanner:
                 )
             )
             ax.text(pos[0], pos[1], str(item.activation_time), style="italic")
-        plt.title("Feet Position", fontsize="60")
-        plt.xlabel("x [m]", fontsize="40")
-        plt.ylabel("y [m]", fontsize="40")
+        plt.title("Feet Position", fontsize="25")
+        plt.xlabel("x [m]", fontsize="15")
+        plt.ylabel("y [m]", fontsize="15")
         plt.show()
 
     def initialize_foot_swing_planner(self):
@@ -321,8 +322,8 @@ class FootPositionPlanner:
         self.planner_right_foot.set_contact_list(
             contact_list=self.contact_list_right_foot
         )
-        # print("planner right foot",self.planner_right_foot.__dir__())
-        # self.plot_feet_position()
+        print("planner right foot",self.planner_right_foot.__dir__())
+        self.plot_feet_position()
 
     def advance_swing_foot_planner(self):
         self.planner_left_foot.advance()
