@@ -305,9 +305,9 @@ class TSIDController(Controller):
         self.root_link_task.initialize(param_handler=self.root_link_task_param_handler)
 
         ## Add tasks to the controller
-        # self.controller.add_task(
-        #     self.CoM_Task, self.CoM_task_name, self.CoM_task_priority
-        # )
+        self.controller.add_task(
+            self.CoM_Task, self.CoM_task_name, self.CoM_task_priority
+        )
         self.controller.add_task(
             self.joint_regularization_task,
             self.joint_regularization_task_name,

@@ -7,6 +7,7 @@ import bipedal_locomotion_framework.bindings as blf
 from datetime import timedelta
 from pydrake.math import RotationMatrix
 
+
 class FootPositionPlanner:
     def __init__(self, robot_model: RobotModel, dT, step_length):
         self.robot_model = robot_model
@@ -37,16 +38,16 @@ class FootPositionPlanner:
     def compute_feet_contact_position(self):
         ### Left Foot
         self.contact_list_left_foot = blf.contacts.ContactList()
-        # self.contact_list_left_foot.setDefaultName("LeftFoot")
         contact = blf.contacts.PlannedContact()
+        left_foot_pose = self.H_left_foot_init
         leftPosition = np.zeros(3)
-        leftPosition_casadi = np.array(self.H_left_foot_init[:3, 3])
+        leftPosition_casadi = np.array(left_foot_pose[:3, 3])
         leftPosition[0] = float(leftPosition_casadi[0])
         leftPosition[1] = float(leftPosition_casadi[1])
         leftPosition[2] = float(leftPosition_casadi[2])
         leftPosition[2] = 0.0
         # also get the initial foot orientation
-        foot_quat_drake = RotationMatrix(self.H_left_foot_fun(H_b, s_des)[:3, :3]).ToQuaternion().wxyz()
+        foot_quat_drake = RotationMatrix(left_foot_pose[:3, :3]).ToQuaternion().wxyz()
         quaternion = np.append(foot_quat_drake[1:], foot_quat_drake[0])
 
         contact.pose = manif.SE3(position=leftPosition, quaternion=quaternion)
@@ -305,7 +306,7 @@ class FootPositionPlanner:
 
         self.parameters_handler = blf.parameters_handler.StdParametersHandler()
         self.parameters_handler.set_parameter_datetime("sampling_time", self.dT)
-        self.parameters_handler.set_parameter_float("step_height", 0.1)
+        self.parameters_handler.set_parameter_float("step_height", 0.05)
         self.parameters_handler.set_parameter_float("foot_apex_time", 0.5)
         self.parameters_handler.set_parameter_float("foot_landing_velocity", 0.0)
         self.parameters_handler.set_parameter_float("foot_landing_acceleration", 0.0)
@@ -322,7 +323,7 @@ class FootPositionPlanner:
         self.planner_right_foot.set_contact_list(
             contact_list=self.contact_list_right_foot
         )
-        print("planner right foot",self.planner_right_foot.__dir__())
+        print("planner right foot", self.planner_right_foot.__dir__())
         self.plot_feet_position()
 
     def advance_swing_foot_planner(self):

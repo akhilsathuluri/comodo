@@ -227,6 +227,15 @@ class DrakeSimulator(SimulatorAbstract):
         plant = self.diagram.GetSubsystemByName("plant")
         plant_context = self.diagram.GetMutableSubsystemContext(plant, self.context)
 
+        # increase the joint limits
+        model = plant.GetModelInstanceByName("v1-biped-description")
+        jis = plant.GetJointIndices(model)
+        for ji in jis:
+            if plant.get_joint(ji).type_name() == "revolute":
+                plant.get_joint(ji).set_position_limits(
+                    lower_limits=[-2 * np.pi], upper_limits=[-2 * np.pi]
+                )
+
         self.set_base_pose_in_drake(xyz_rpy)
         self.set_joint_vector_in_drake(s)
         # set initial pose of the robot
@@ -269,7 +278,7 @@ class DrakeSimulator(SimulatorAbstract):
         self.simulator.AdvanceTo(self.context.get_time() + n_step * self.time_step)
         if visualize and self.visualize_robot_flag:
             self.diagram.ForcedPublish(self.context)
-            
+
         pass
 
     def step_with_motors(self, n_step, torque, visualize=True):

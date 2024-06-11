@@ -3,8 +3,9 @@ import numpy as np
 
 class TSIDParameterTuning:
     def __init__(self) -> None:
-        self.CoM_Kp = 15.0
-        self.CoM_Kd = 7.0
+        scale = 0.5
+        self.CoM_Kp = 15.0 * scale
+        self.CoM_Kd = 7.0 * scale
 
         # since we only have one leg + symmetry
         self.postural_Kp = (
@@ -21,13 +22,13 @@ class TSIDParameterTuning:
         )  # TODO symmetry
 
         self.postural_weight = 10 * np.ones(len(self.postural_Kp))
-        self.foot_tracking_task_kp_lin = 30.0
-        self.foot_tracking_task_kd_lin = 7.0
-        self.foot_tracking_task_kp_ang = 300.0
-        self.foot_tracking_task_kd_ang = 10.0
-        self.root_tracking_task_weight = 10 * np.ones(3)
-        self.root_link_kp_ang = 20.0
-        self.root_link_kd_ang = 10.0
+        self.foot_tracking_task_kp_lin = 30.0 * scale
+        self.foot_tracking_task_kd_lin = 7.0 * scale
+        self.foot_tracking_task_kp_ang = 300.0 * scale
+        self.foot_tracking_task_kd_ang = 10.0 * scale
+        self.root_tracking_task_weight = 1 * np.ones(3) * scale
+        self.root_link_kp_ang = 20.0 * scale
+        self.root_link_kd_ang = 10.0 * scale
 
     def set_postural_gain(self, leg):
         self.postural_Kp = np.concatenate([leg, leg])
