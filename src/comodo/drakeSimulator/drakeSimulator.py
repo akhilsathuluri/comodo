@@ -58,7 +58,7 @@ class DrakeSimulator(SimulatorAbstract):
         # TODO: Handle urdfs with mesh packages
         # parser.package_map().Add("ergoCub", mesh_path)
         # parser.package_map().Add("package://", self.mesh_path)
-        robot_model_sim = parser.AddModels(
+        self.robot_model_sim = parser.AddModels(
             # self.original_urdf_path,
             file_contents=self.urdf_string,
             file_type="urdf",
@@ -81,7 +81,7 @@ class DrakeSimulator(SimulatorAbstract):
         self.nq = plant.num_positions()
         self.nv = plant.num_velocities()
         self.na = plant.num_actuators()
-        self.sim_joint_order = self.duh.get_sim_joint_order(plant, robot_model_sim)
+        self.sim_joint_order = self.duh.get_sim_joint_order(plant, self.robot_model_sim)
         # check if the joint ordering is the same
         # logging.info(
         #     "Need joint mapping: ", not (sim_joint_order == robot_model.joint_name_list)
@@ -145,7 +145,7 @@ class DrakeSimulator(SimulatorAbstract):
         parser.package_map().Add(
             package_name.split("/")[0], abs_path + "/" + package_name
         )
-        robot_model_sim = parser.AddModels(urdf_file.name)[0]
+        self.robot_model_sim = parser.AddModels(urdf_file.name)[0]
 
         # TODO: Use Im and Km to add motor params here
         logging.warning(
@@ -217,13 +217,13 @@ class DrakeSimulator(SimulatorAbstract):
         plant_context = self.diagram.GetMutableSubsystemContext(plant, self.context)
 
         # increase the joint limits
-        model = plant.GetModelInstanceByName("v1-biped-description")
-        jis = plant.GetJointIndices(model)
-        for ji in jis:
-            if plant.get_joint(ji).type_name() == "revolute":
-                plant.get_joint(ji).set_position_limits(
-                    lower_limits=[-2 * np.pi], upper_limits=[-2 * np.pi]
-                )
+        # model = plant.GetModelInstanceByName("v1-biped-description")
+        # jis = plant.GetJointIndices(self.robot_model_sim)
+        # for ji in jis:
+        #     if plant.get_joint(ji).type_name() == "revolute":
+        #         plant.get_joint(ji).set_position_limits(
+        #             lower_limits=[-2 * np.pi], upper_limits=[-2 * np.pi]
+        #         )
 
         self.set_base_pose_in_drake(xyz_rpy)
         self.set_joint_vector_in_drake(s)

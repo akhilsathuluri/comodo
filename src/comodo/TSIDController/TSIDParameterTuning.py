@@ -1,34 +1,25 @@
 import numpy as np
-
+import yaml
 
 class TSIDParameterTuning:
-    def __init__(self) -> None:
+    def __init__(self, cfg_file_path) -> None:
+
+        with open(cfg_file_path, 'r') as file:
+            params = yaml.safe_load(file)
+        
         scale = 0.5
-        self.CoM_Kp = 15.0 * scale
-        self.CoM_Kd = 7.0 * scale
 
-        # since we only have one leg + symmetry
-        self.postural_Kp = (
-            np.array(
-                [
-                    150,
-                    20,
-                    20,
-                    180,
-                ]
-                * 2
-            )
-            * 1.0
-        )  # TODO symmetry
-
-        self.postural_weight = 10 * np.ones(len(self.postural_Kp))
-        self.foot_tracking_task_kp_lin = 30.0 * scale
-        self.foot_tracking_task_kd_lin = 7.0 * scale
-        self.foot_tracking_task_kp_ang = 300.0 * scale
-        self.foot_tracking_task_kd_ang = 10.0 * scale
-        self.root_tracking_task_weight = 1 * np.ones(3) * scale
-        self.root_link_kp_ang = 20.0 * scale
-        self.root_link_kd_ang = 10.0 * scale
+        self.CoM_Kp = params['CoM_Kp'] * scale
+        self.CoM_Kd = params['CoM_Kd']* scale
+        self.postural_Kp = np.array(params['postural_Kp']) * 1.0
+        self.postural_weight = np.array(params['postural_weight']) * 10
+        self.foot_tracking_task_kp_lin = params['foot_tracking_task_kp_lin'] * scale
+        self.foot_tracking_task_kd_lin = params['foot_tracking_task_kd_lin'] * scale
+        self.foot_tracking_task_kp_ang = params['foot_tracking_task_kp_ang'] * scale
+        self.foot_tracking_task_kd_ang = params['foot_tracking_task_kd_ang'] * scale
+        self.root_tracking_task_weight = np.array(params['root_tracking_task_weight']) * scale
+        self.root_link_kp_ang = params['root_link_kp_ang'] * scale
+        self.root_link_kd_ang = params['root_link_kd_ang'] * scale
 
     def set_postural_gain(self, leg):
         self.postural_Kp = np.concatenate([leg, leg])
@@ -52,7 +43,8 @@ class TSIDParameterTuning:
         self.CoM_Kp = kp_com
 
     def set_from_x_k(self, x_k):
-        self.set_postural_gain(x_k[:4])
-        self.set_foot_task(x_k[4], x_k[5], x_k[6], x_k[7])
-        self.set_root_task(x_k[8], x_k[9])
-        self.set_com_task(x_k[10], x_k[11])
+        # self.set_postural_gain(x_k[:4])
+        # self.set_foot_task(x_k[4], x_k[5], x_k[6], x_k[7])
+        # self.set_root_task(x_k[8], x_k[9])
+        # self.set_com_task(x_k[10], x_k[11])
+        raise NotImplementedError
