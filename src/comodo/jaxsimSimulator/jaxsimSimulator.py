@@ -12,7 +12,7 @@ import jaxsim.api as js
 import jaxsim.rbda.contacts
 import numpy as np
 import numpy.typing as npt
-from jaxsim import VelRepr, integrators
+from jaxsim import VelRepr
 from jaxsim.mujoco import MujocoVideoRecorder
 from jaxsim.mujoco.loaders import UrdfToMjcf
 from jaxsim.mujoco.model import MujocoModelHelper
@@ -66,7 +66,7 @@ class JaxsimSimulator(Simulator):
 
         # Step aux dict.
         # This is used only for variable-step integrators.
-        self._step_aux_dict: dict[str, Any]= {}
+        self._step_aux_dict: dict[str, Any] = {}
 
         # Time step for the simulation
         self._dt: float = dt
