@@ -68,15 +68,6 @@ conda install -c conda-forge -c robotology casadi pytest liecasadi  meshcat-pyth
 pip install --no-deps git+https://github.com/ami-iit/hippopt.git
 ```
 
-#### With Drake
-
-To use [`drake`](https://drake.mit.edu/) as the simulator backend requires the following additional dependencies:
-
-```bash
-conda install meshio tqdm
-pip install drake git+https://github.com/ami-iit/amo_urdf
-```
-
 ### 📦 Installation with pixi
 
 An alternative and easy way to use comodo is with [`pixi`](https://pixi.sh/latest/) package manager. It automatically handles the creation and activation of virtual environments in which to use the different simulators that comodo supports.
