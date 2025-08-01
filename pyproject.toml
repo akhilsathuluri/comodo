@@ -44,12 +44,11 @@ package-dir = { "" = "src" }
 # ==================
 
 [tool.pixi.project]
-channels = ["conda-forge", "robotology"]
+channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.system-requirements]
 libc = "2.35"
-cuda = "12"
 
 [tool.pixi.dependencies]
 adam-robotics = "*"
